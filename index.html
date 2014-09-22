@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+window.onload = function() {
+    var s = new WebSocket("ws://devstack:7000/data");
+    s.onopen = function() {
+        s.send(JSON.stringify({"X-Auth-Token": "c86ee2a91ca54559a3efd491ceb5ce1f"}));
+    };
+    s.onmessage = function(e) {
+        writeToDoc(JSON.parse(e.data));
+    };
+    writeToDoc = function(msg) {
+        var f = document.getElementById("content");
+        f.innerHTML += "<div>" + msg["metadata"]["timestamp"] + " " + msg["event_type"] + "</div>";
+    };
+};
+</script>
+</head>
+<body>
+<div id='content'></div>
+</body>
+</html>

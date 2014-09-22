@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+import eventlet
+eventlet.monkey_patch(os=False)
+
+from eventlet import wsgi
+
+from oslo.config import cfg
+
+from osn.openstack.common import log
+from osn.openstack.common import service
+
+from osn import consumer
+from osn import listener
+from osn import ws
+
+cfg.CONF(project='osn', prog='osn-server')
+log.setup('osn')
+
+csm = consumer.Consumer()
+launcher = service.ServiceLauncher()
+launcher.launch_service(listener.NotificationService(csm))
+eventlet.spawn(launcher.wait)
+server = eventlet.listen((cfg.CONF.host, int(cfg.CONF.port)))
+dispatcher = ws.Dispatcher(csm)
+wsgi.server(server, dispatcher.dispatch)
